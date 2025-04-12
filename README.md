@@ -65,6 +65,88 @@ Development mode:
 
 When running without the dev flag, the server runs in release mode which is optimized for production use.
 
+## Docker Deployment
+
+You can run MediaStream in a Docker container for easier deployment.
+
+### Prerequisites
+
+- Docker installed on your machine
+
+### Building and Running with Docker
+
+1. Build the Docker image:
+   ```
+   docker build -t mediastream .
+   ```
+
+2. Run the container:
+   ```
+   docker run -d --name mediastream-server \
+     -p 3000:3000 \
+     -v /path/to/your/movies:/app/media/movies \
+     -v /path/to/your/tvshows:/app/media/tvshows \
+     -v /path/to/your/music:/app/media/music \
+     --restart unless-stopped \
+     mediastream
+   ```
+
+3. Access the application at `http://localhost:3000`
+
+### Development Mode in Docker
+
+To run the container in development mode:
+```
+docker run -d --name mediastream-dev \
+  -p 3000:3000 \
+  -v /path/to/your/movies:/app/media/movies \
+  -v /path/to/your/tvshows:/app/media/tvshows \
+  -v /path/to/your/music:/app/media/music \
+  --restart unless-stopped \
+  mediastream ./mediastream dev
+```
+
+### Data Persistence
+
+To persist user data and configuration between container restarts:
+```
+docker run -d --name mediastream-server \
+  -p 3000:3000 \
+  -v /path/to/your/movies:/app/media/movies \
+  -v /path/to/your/tvshows:/app/media/tvshows \
+  -v /path/to/your/music:/app/media/music \
+  -v /path/to/data/folder:/app \
+  --restart unless-stopped \
+  mediastream
+```
+
+### Docker Compose
+
+You can also use Docker Compose for easier management. Create a `docker-compose.yml` file:
+
+```yaml
+version: '3'
+
+services:
+  mediastream:
+    build: .
+    container_name: mediastream-server
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config.json:/app/config.json
+      - ./users.json:/app/users.json
+      - ./media/movies:/app/media/movies
+      - ./media/tvshows:/app/media/tvshows
+      - ./media/music:/app/media/music
+    restart: unless-stopped
+```
+
+Then run:
+```
+docker-compose up -d
+```
+
 ## Configuration
 
 The first time you run the server, you'll be redirected to a setup page where you can create the admin user and configure media directories.
@@ -136,4 +218,4 @@ tvshows/
 
 ## License
 
-MIT 
+MIT
