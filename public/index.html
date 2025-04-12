@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Media Server</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="logo">
+        <h1>MediaStream</h1>
+      </div>
+      <nav class="main-nav">
+        <ul id="library-list">
+          <li class="nav-item loading">Loading libraries...</li>
+        </ul>
+      </nav>
+    </aside>
+    
+    <main class="main-content">
+      <header class="content-header">
+        <div class="header-left">
+          <h2 id="current-library">Media Library</h2>
+        </div>
+        <div class="header-right">
+          <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search media..." aria-label="Search media">
+            <button id="search-button" aria-label="Search">🔍</button>
+          </div>
+        </div>
+      </header>
+      
+      <div class="media-container">
+        <div id="search-results" class="search-results hidden">
+          <div class="search-header">
+            <h3 id="search-title">Search Results</h3>
+            <button id="close-search" class="close-button-small" aria-label="Close search">×</button>
+          </div>
+          
+          <div id="search-count" class="search-count"></div>
+          <div id="search-grid" class="media-grid"></div>
+        </div>
+        
+        <div id="media-grid" class="media-grid">
+          <div class="loading-message">Select a library to browse content</div>
+        </div>
+      </div>
+    </main>
+    
+    <div id="player-overlay" class="player-overlay hidden">
+      <div class="player-header">
+        <h3 id="playing-title">Now Playing</h3>
+        <button id="close-player" class="close-button">×</button>
+      </div>
+      <div id="player-container" class="player-container">
+        <!-- Media player will be inserted here -->
+      </div>
+    </div>
+  </div>
+  
+  <script src="script.js"></script>
+</body>
+</html> 

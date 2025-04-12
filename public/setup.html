@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Stream - Initial Setup</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .setup-container {
+            max-width: 500px;
+            margin: 80px auto;
+            padding: 20px;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .setup-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .setup-logo h1 {
+            color: var(--primary-color);
+            font-size: 2.2rem;
+            margin: 0;
+        }
+        
+        .setup-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .setup-title {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .form-error {
+            color: var(--error-color);
+            font-size: 0.9rem;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .setup-success {
+            text-align: center;
+            color: var(--success-color);
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .media-paths-container {
+            margin-top: 15px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+        }
+        
+        .media-paths-title {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .media-paths-help {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-logo">
+            <h1>Media Stream</h1>
+        </div>
+        
+        <div class="setup-title">
+            Initial Server Setup
+        </div>
+        
+        <form id="setupForm" class="setup-form">
+            <div class="form-group">
+                <label for="username">Admin Username</label>
+                <input type="text" id="username" name="username" required autocomplete="username">
+                <div id="usernameError" class="form-error">Please enter a valid username</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Admin Password</label>
+                <input type="password" id="password" name="password" required autocomplete="new-password">
+                <div id="passwordError" class="form-error">Password must be at least 8 characters</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required autocomplete="new-password">
+                <div id="confirmPasswordError" class="form-error">Passwords don't match</div>
+            </div>
+            
+            <div class="media-paths-container">
+                <div class="media-paths-title">Media Library Paths</div>
+                <div class="media-paths-help">Leave blank to use default paths</div>
+                
+                <div class="form-group">
+                    <label for="moviesPath">Movies Library Path</label>
+                    <input type="text" id="moviesPath" name="moviesPath" placeholder="/path/to/movies">
+                </div>
+                
+                <div class="form-group">
+                    <label for="tvshowsPath">TV Shows Library Path</label>
+                    <input type="text" id="tvshowsPath" name="tvshowsPath" placeholder="/path/to/tvshows">
+                </div>
+                
+                <div class="form-group">
+                    <label for="musicPath">Music Library Path</label>
+                    <input type="text" id="musicPath" name="musicPath" placeholder="/path/to/music">
+                </div>
+            </div>
+            
+            <button type="submit" class="button-primary">Complete Setup</button>
+        </form>
+        
+        <div id="setupSuccess" class="setup-success">
+            Setup completed successfully! You will be redirected to login...
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const setupForm = document.getElementById('setupForm');
+            const setupSuccess = document.getElementById('setupSuccess');
+            
+            setupForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Reset errors
+                document.querySelectorAll('.form-error').forEach(el => el.style.display = 'none');
+                
+                // Get form values
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                
+                // Get media paths
+                const moviesPath = document.getElementById('moviesPath').value.trim();
+                const tvshowsPath = document.getElementById('tvshowsPath').value.trim();
+                const musicPath = document.getElementById('musicPath').value.trim();
+                
+                // Validate
+                let isValid = true;
+                
+                if (!username || username.length < 3) {
+                    document.getElementById('usernameError').style.display = 'block';
+                    document.getElementById('usernameError').textContent = 'Username must be at least 3 characters';
+                    isValid = false;
+                }
+                
+                if (!password || password.length < 8) {
+                    document.getElementById('passwordError').style.display = 'block';
+                    isValid = false;
+                }
+                
+                if (password !== confirmPassword) {
+                    document.getElementById('confirmPasswordError').style.display = 'block';
+                    isValid = false;
+                }
+                
+                if (isValid) {
+                    // Create request payload
+                    const payload = {
+                        username,
+                        password
+                    };
+                    
+                    // Add media paths if provided
+                    if (moviesPath || tvshowsPath || musicPath) {
+                        payload.mediaFolders = {};
+                        if (moviesPath) payload.mediaFolders.movies = moviesPath;
+                        if (tvshowsPath) payload.mediaFolders.tvshows = tvshowsPath;
+                        if (musicPath) payload.mediaFolders.music = musicPath;
+                    }
+                    
+                    // Submit to API
+                    fetch('/api/setup', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(data => {
+                                throw new Error(data.error || 'Setup failed');
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Show success message
+                        setupForm.style.display = 'none';
+                        setupSuccess.style.display = 'block';
+                        
+                        // Redirect to login after 2 seconds
+                        setTimeout(() => {
+                            window.location.href = '/login';
+                        }, 2000);
+                    })
+                    .catch(error => {
+                        alert('Error: ' + error.message);
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html> 
