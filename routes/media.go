@@ -60,13 +60,29 @@ func HandleGetLibrary(c *gin.Context, cfg *config.Config) {
 		return
 	}
 
-	items, err := models.ScanDirectory(libraryFolder, libraryType, cfg)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error scanning directory: %v", err)})
+	// First check if directory exists
+	if _, err := os.Stat(libraryFolder); os.IsNotExist(err) {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Library directory does not exist: %s", libraryFolder),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, items)
+	items, err := models.ScanDirectory(libraryFolder, libraryType, cfg)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Error scanning directory: %v", err),
+		})
+		return
+	}
+
+	// Even if no error, check if items array is empty
+	if len(items) == 0 {
+		// Return empty array instead of null to avoid client-side errors
+		c.JSON(http.StatusOK, []models.MediaItem{})
+	} else {
+		c.JSON(http.StatusOK, items)
+	}
 }
 
 // HandleGetMediaItem returns details for a specific media item

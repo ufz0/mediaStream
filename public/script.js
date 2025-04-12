@@ -594,11 +594,24 @@ document.addEventListener('DOMContentLoaded', () => {
     
     try {
       const response = await fetch(`/api/library/${library.type}`);
+      
+      if (!response.ok) {
+        // If the server returns an error, display it properly
+        const errorData = await response.json();
+        console.error("API error:", errorData.error || "Unknown error");
+        mediaGrid.innerHTML = `<div class="loading-message error">Error loading media: ${errorData.error || "Unknown error"}</div>`;
+        return;
+      }
+      
       const items = await response.json();
       
-      renderMediaItems(items, library.type);
+      // Ensure items is always treated as an array
+      const mediaItems = Array.isArray(items) ? items : [];
+      
+      renderMediaItems(mediaItems, library.type);
     } catch (error) {
-      mediaGrid.innerHTML = `<div class="loading-message error">Error: ${error.message}</div>`;
+      console.error("Error fetching library data:", error);
+      mediaGrid.innerHTML = `<div class="loading-message error">Error loading media: ${error.message}</div>`;
     }
   }
   

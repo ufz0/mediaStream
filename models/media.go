@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -30,16 +31,27 @@ type MediaItem struct {
 func ScanDirectory(directoryPath, libraryType string, cfg *config.Config) ([]MediaItem, error) {
 	mediaFiles := []MediaItem{}
 
+	// Debug: Print the directory being scanned
+	fmt.Printf("Scanning directory: %s for library type: %s\n", directoryPath, libraryType)
+
+	// Check if directory exists
+	if _, err := os.Stat(directoryPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("directory does not exist: %s", directoryPath)
+	}
+
 	entries, err := os.ReadDir(directoryPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read directory %s: %v", directoryPath, err)
 	}
+
+	fmt.Printf("Found %d entries in directory %s\n", len(entries), directoryPath)
 
 	// Handle movies differently (each movie is in its own folder)
 	if libraryType == "movies" {
 		for _, entry := range entries {
 			if entry.IsDir() {
 				entryPath := filepath.Join(directoryPath, entry.Name())
+				fmt.Printf("Processing movie folder: %s\n", entryPath)
 
 				// Use folder name as the movie title
 				movieTitle := entry.Name()
@@ -47,10 +59,12 @@ func ScanDirectory(directoryPath, libraryType string, cfg *config.Config) ([]Med
 				// Find video files in the movie folder
 				movieFiles, err := os.ReadDir(entryPath)
 				if err != nil {
+					fmt.Printf("Error reading movie directory %s: %v\n", entryPath, err)
 					continue
 				}
 
 				// Find all video files (not just the first one)
+				videoFilesFound := 0
 				for _, file := range movieFiles {
 					if file.IsDir() {
 						continue
@@ -70,6 +84,7 @@ func ScanDirectory(directoryPath, libraryType string, cfg *config.Config) ([]Med
 						filePath := filepath.Join(entryPath, file.Name())
 						fileInfo, err := os.Stat(filePath)
 						if err != nil {
+							fmt.Printf("Error getting file info for %s: %v\n", filePath, err)
 							continue
 						}
 
@@ -92,8 +107,10 @@ func ScanDirectory(directoryPath, libraryType string, cfg *config.Config) ([]Med
 							Modified:    fileInfo.ModTime(),
 							Folder:      movieTitle,
 						})
+						videoFilesFound++
 					}
 				}
+				fmt.Printf("Found %d video files in movie folder: %s\n", videoFilesFound, entryPath)
 			}
 		}
 	} else {
@@ -162,6 +179,7 @@ func ScanDirectory(directoryPath, libraryType string, cfg *config.Config) ([]Med
 		}
 	}
 
+	fmt.Printf("Total media files found in %s: %d\n", directoryPath, len(mediaFiles))
 	return mediaFiles, nil
 }
 
