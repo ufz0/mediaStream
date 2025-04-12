@@ -20,8 +20,12 @@ type MediaFolder struct {
 
 // DefaultConfig returns a new default configuration
 func DefaultConfig() *Config {
-	// Get project directory instead of executable directory
-	projectDir := "/Users/lukas/Coding/mediaStream-test"
+	// Get current working directory instead of hardcoded path
+	projectDir, err := os.Getwd()
+	if err != nil {
+		// Fallback to relative path if getting working directory fails
+		projectDir = "."
+	}
 
 	return &Config{
 		MediaFolders: []MediaFolder{

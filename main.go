@@ -45,19 +45,6 @@ func main() {
 		log.Fatalf("Error loading configuration: %v", err)
 	}
 
-	// Fix media paths to use the project directory
-	projectDir, _ := os.Getwd()
-	for i := range cfg.MediaFolders {
-		switch cfg.MediaFolders[i].Type {
-		case "movies":
-			cfg.MediaFolders[i].Path = filepath.Join(projectDir, "media/movies")
-		case "tvshows":
-			cfg.MediaFolders[i].Path = filepath.Join(projectDir, "media/tvshows")
-		case "music":
-			cfg.MediaFolders[i].Path = filepath.Join(projectDir, "media/music")
-		}
-	}
-
 	// Create media directories if they don't exist
 	for _, folder := range cfg.MediaFolders {
 		if _, err := os.Stat(folder.Path); os.IsNotExist(err) {
