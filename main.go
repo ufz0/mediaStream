@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -46,7 +47,20 @@ func main() {
 	}
 
 	// Create media directories if they don't exist
+	// But skip creation if paths are likely external (Docker volumes, network shares, etc.)
 	for _, folder := range cfg.MediaFolders {
+		// Check if this is a Docker volume or external path that shouldn't be created locally
+		isExternal := strings.HasPrefix(folder.Path, "/mnt/") ||
+			strings.HasPrefix(folder.Path, "/media/") ||
+			strings.HasPrefix(folder.Path, "/volume") ||
+			strings.HasPrefix(folder.Path, "/data/")
+
+		if isExternal {
+			// Skip directory creation for external paths
+			log.Printf("External media path detected, skipping directory creation: %s", folder.Path)
+			continue
+		}
+
 		if _, err := os.Stat(folder.Path); os.IsNotExist(err) {
 			err = os.MkdirAll(folder.Path, 0755)
 			if err != nil {

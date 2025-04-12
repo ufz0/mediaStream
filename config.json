@@ -1,15 +1,15 @@
 {
   "mediaFolders": [
     {
-      "path": "/var/folders/0c/lrmjm9pj23g2wjq3ckkxh69r0000gn/T/go-build844023050/b001/exe/media/movies",
+      "path": "/mnt/docker-volumes/movies",
       "type": "movies"
     },
     {
-      "path": "/var/folders/0c/lrmjm9pj23g2wjq3ckkxh69r0000gn/T/go-build844023050/b001/exe/media/tvshows",
+      "path": "/mnt/docker-volumes/tv",
       "type": "tvshows"
     },
     {
-      "path": "/var/folders/0c/lrmjm9pj23g2wjq3ckkxh69r0000gn/T/go-build844023050/b001/exe/media/music",
+      "path": "/mnt/docker-volumes/music",
       "type": "music"
     }
   ],
