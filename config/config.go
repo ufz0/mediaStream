@@ -49,10 +49,25 @@ func LoadConfig(filename string) (*Config, error) {
 		return nil, err
 	}
 
-	config := DefaultConfig()
+	// Create a fresh config without default paths
+	config := &Config{
+		SupportedExtensions: map[string][]string{
+			"video": {".mp4", ".mkv", ".avi", ".mov", ".webm"},
+			"audio": {".mp3", ".wav", ".flac", ".ogg", ".aac"},
+			"image": {".jpg", ".jpeg", ".png", ".gif", ".webp"},
+		},
+	}
+
+	// Unmarshal directly to the empty config
 	err = json.Unmarshal(data, config)
 	if err != nil {
 		return nil, err
+	}
+
+	// If media folders are not defined in config file, use defaults
+	if len(config.MediaFolders) == 0 {
+		defaultConfig := DefaultConfig()
+		config.MediaFolders = defaultConfig.MediaFolders
 	}
 
 	return config, nil
