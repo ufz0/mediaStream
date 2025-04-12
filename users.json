@@ -1,3 +1,9 @@
 [
-
+  {
+    "id": "c868670894df15445dd273ee567680d0",
+    "username": "dev",
+    "password": "$2a$10$412i43sapZgowN/JffQ6y.lGItPS7/Nf8hcKCHGo4ris3KOxPmnD.",
+    "isAdmin": true,
+    "created": "0001-01-01T00:00:00Z"
+  }
 ]

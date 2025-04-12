@@ -1,0 +1,39 @@
+{
+  "mediaFolders": [
+    {
+      "path": "/var/folders/0c/lrmjm9pj23g2wjq3ckkxh69r0000gn/T/go-build844023050/b001/exe/media/movies",
+      "type": "movies"
+    },
+    {
+      "path": "/var/folders/0c/lrmjm9pj23g2wjq3ckkxh69r0000gn/T/go-build844023050/b001/exe/media/tvshows",
+      "type": "tvshows"
+    },
+    {
+      "path": "/var/folders/0c/lrmjm9pj23g2wjq3ckkxh69r0000gn/T/go-build844023050/b001/exe/media/music",
+      "type": "music"
+    }
+  ],
+  "supportedExtensions": {
+    "audio": [
+      ".mp3",
+      ".wav",
+      ".flac",
+      ".ogg",
+      ".aac"
+    ],
+    "image": [
+      ".jpg",
+      ".jpeg",
+      ".png",
+      ".gif",
+      ".webp"
+    ],
+    "video": [
+      ".mp4",
+      ".mkv",
+      ".avi",
+      ".mov",
+      ".webm"
+    ]
+  }
+}
