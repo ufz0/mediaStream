@@ -604,6 +604,13 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Render media items in the grid
   function renderMediaItems(items, libraryType) {
+    // Ensure items is an array
+    if (!items || !Array.isArray(items)) {
+      console.error("Invalid items data:", items);
+      mediaGrid.innerHTML = `<div class="loading-message">Error: Invalid media data received</div>`;
+      return;
+    }
+    
     if (items.length === 0) {
       mediaGrid.innerHTML = `<div class="loading-message">No media found in this library</div>`;
       return;
