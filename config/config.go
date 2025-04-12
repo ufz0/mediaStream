@@ -53,7 +53,7 @@ func LoadConfig(filename string) (*Config, error) {
 		return nil, err
 	}
 
-	// Create a fresh config without default paths
+	// Create a config object to unmarshal into
 	config := &Config{
 		SupportedExtensions: map[string][]string{
 			"video": {".mp4", ".mkv", ".avi", ".mov", ".webm"},
@@ -68,7 +68,7 @@ func LoadConfig(filename string) (*Config, error) {
 		return nil, err
 	}
 
-	// If media folders are not defined in config file, use defaults
+	// Only use defaults if no media folders were specified in the config file
 	if len(config.MediaFolders) == 0 {
 		defaultConfig := DefaultConfig()
 		config.MediaFolders = defaultConfig.MediaFolders
