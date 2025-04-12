@@ -50,48 +50,49 @@ func ScanDirectory(directoryPath, libraryType string, cfg *config.Config) ([]Med
 					continue
 				}
 
-				// Find first video file
-				var videoFile os.DirEntry
+				// Find all video files (not just the first one)
 				for _, file := range movieFiles {
 					if file.IsDir() {
 						continue
 					}
 
 					ext := strings.ToLower(filepath.Ext(file.Name()))
+					isVideoFile := false
+
 					for _, supportedExt := range cfg.SupportedExtensions["video"] {
 						if ext == supportedExt {
-							videoFile = file
+							isVideoFile = true
 							break
 						}
 					}
 
-					if videoFile != nil {
-						break
+					if isVideoFile {
+						filePath := filepath.Join(entryPath, file.Name())
+						fileInfo, err := os.Stat(filePath)
+						if err != nil {
+							continue
+						}
+
+						// Create ID from path
+						relativePath := filepath.Join(entry.Name(), file.Name())
+						id := base64.StdEncoding.EncodeToString([]byte(libraryType + ":" + relativePath))
+
+						// Properly URL-escape both folder name and filename
+						escapedFolder := url.PathEscape(entry.Name())
+						escapedFilename := url.PathEscape(file.Name())
+
+						mediaFiles = append(mediaFiles, MediaItem{
+							ID:          id,
+							Title:       utils.GetTitle(movieTitle),
+							Type:        "video",
+							LibraryType: libraryType,
+							Filename:    file.Name(),
+							Path:        "/stream/movie/" + libraryType + "/" + escapedFolder + "/" + escapedFilename,
+							Size:        fileInfo.Size(),
+							Modified:    fileInfo.ModTime(),
+							Folder:      movieTitle,
+						})
 					}
-				}
-
-				if videoFile != nil {
-					filePath := filepath.Join(entryPath, videoFile.Name())
-					fileInfo, err := os.Stat(filePath)
-					if err != nil {
-						continue
-					}
-
-					// Create ID from path
-					relativePath := filepath.Join(entry.Name(), videoFile.Name())
-					id := base64.StdEncoding.EncodeToString([]byte(libraryType + ":" + relativePath))
-
-					mediaFiles = append(mediaFiles, MediaItem{
-						ID:          id,
-						Title:       utils.GetTitle(movieTitle),
-						Type:        "video",
-						LibraryType: libraryType,
-						Filename:    videoFile.Name(),
-						Path:        "/stream/movie/" + libraryType + "/" + url.PathEscape(entry.Name()) + "/" + url.PathEscape(videoFile.Name()),
-						Size:        fileInfo.Size(),
-						Modified:    fileInfo.ModTime(),
-						Folder:      movieTitle,
-					})
 				}
 			}
 		}

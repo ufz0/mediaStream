@@ -20,18 +20,14 @@ type MediaFolder struct {
 
 // DefaultConfig returns a new default configuration
 func DefaultConfig() *Config {
-	// Get executable directory
-	exePath, err := os.Executable()
-	if err != nil {
-		exePath = "."
-	}
-	exeDir := filepath.Dir(exePath)
+	// Get project directory instead of executable directory
+	projectDir := "/Users/lukas/Coding/mediaStream-test"
 
 	return &Config{
 		MediaFolders: []MediaFolder{
-			{Path: filepath.Join(exeDir, "media/movies"), Type: "movies"},
-			{Path: filepath.Join(exeDir, "media/tvshows"), Type: "tvshows"},
-			{Path: filepath.Join(exeDir, "media/music"), Type: "music"},
+			{Path: filepath.Join(projectDir, "media/movies"), Type: "movies"},
+			{Path: filepath.Join(projectDir, "media/tvshows"), Type: "tvshows"},
+			{Path: filepath.Join(projectDir, "media/music"), Type: "music"},
 		},
 		SupportedExtensions: map[string][]string{
 			"video": {".mp4", ".mkv", ".avi", ".mov", ".webm"},

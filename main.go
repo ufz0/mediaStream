@@ -45,6 +45,19 @@ func main() {
 		log.Fatalf("Error loading configuration: %v", err)
 	}
 
+	// Fix media paths to use the project directory
+	projectDir, _ := os.Getwd()
+	for i := range cfg.MediaFolders {
+		switch cfg.MediaFolders[i].Type {
+		case "movies":
+			cfg.MediaFolders[i].Path = filepath.Join(projectDir, "media/movies")
+		case "tvshows":
+			cfg.MediaFolders[i].Path = filepath.Join(projectDir, "media/tvshows")
+		case "music":
+			cfg.MediaFolders[i].Path = filepath.Join(projectDir, "media/music")
+		}
+	}
+
 	// Create media directories if they don't exist
 	for _, folder := range cfg.MediaFolders {
 		if _, err := os.Stat(folder.Path); os.IsNotExist(err) {
@@ -164,12 +177,45 @@ func main() {
 		routes.HandleSearch(c, cfg)
 	})
 
+	// Debug endpoint to check media scanning
+	router.GET("/api/debug/scan", authMiddleware, func(c *gin.Context) {
+		var debugInfo []gin.H
+
+		for _, folder := range cfg.MediaFolders {
+			entries, err := os.ReadDir(folder.Path)
+
+			entryList := []string{}
+			if err == nil {
+				for _, entry := range entries {
+					entryList = append(entryList, entry.Name())
+				}
+			}
+
+			items, _ := models.ScanDirectory(folder.Path, folder.Type, cfg)
+
+			debugInfo = append(debugInfo, gin.H{
+				"type":      folder.Type,
+				"path":      folder.Path,
+				"entries":   entryList,
+				"itemCount": len(items),
+				"items":     items,
+				"error":     err != nil,
+			})
+		}
+
+		c.JSON(http.StatusOK, debugInfo)
+	})
+
 	// Media streaming routes - using different URL patterns to avoid conflicts
 	router.GET("/stream/file/:type/:filename", authMiddleware, func(c *gin.Context) {
 		routes.HandleStreamMedia(c, cfg)
 	})
 	router.GET("/stream/movie/:type/:folder/:filename", authMiddleware, func(c *gin.Context) {
 		routes.HandleStreamMediaWithFolder(c, cfg)
+	})
+
+	router.GET("/script.js", authMiddleware, func(c *gin.Context) {
+		c.File("public/script.js")
 	})
 
 	// Start server

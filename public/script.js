@@ -158,6 +158,37 @@ document.addEventListener('DOMContentLoaded', () => {
     .hidden {
       display: none;
     }
+    
+    .custom-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 5px;
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 600px;
+    }
+    
+    .custom-controls button, .custom-controls input {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+    
+    .custom-controls input[type="range"] {
+      width: 100px;
+    }
+    
+    .custom-media {
+      width: 100%;
+      height: auto;
+    }
   `;
   document.head.appendChild(style);
   
@@ -637,35 +668,9 @@ document.addEventListener('DOMContentLoaded', () => {
     playingTitle.textContent = item.title;
     
     if (item.type === 'video') {
-      // Create video element
-      const video = document.createElement('video');
-      video.controls = true;
-      video.autoplay = true;
-      // Disable download in video controls
-      video.controlsList = "nodownload";
-      // Prevent saving video
-      video.oncontextmenu = (e) => e.preventDefault();
-      
-      const source = document.createElement('source');
-      source.src = item.path;
-      video.appendChild(source);
-      
-      playerContainer.appendChild(video);
+      createEnhancedMediaPlayer('video', item.path, item.title);
     } else if (item.type === 'audio') {
-      // Create audio element
-      const audio = document.createElement('audio');
-      audio.controls = true;
-      audio.autoplay = true;
-      // Disable download in audio controls
-      audio.controlsList = "nodownload";
-      // Prevent saving audio
-      audio.oncontextmenu = (e) => e.preventDefault();
-      
-      const source = document.createElement('source');
-      source.src = item.path;
-      audio.appendChild(source);
-      
-      playerContainer.appendChild(audio);
+      createEnhancedMediaPlayer('audio', item.path, item.title);
     } else if (item.type === 'image') {
       // Create image element
       const img = document.createElement('img');
@@ -692,5 +697,470 @@ document.addEventListener('DOMContentLoaded', () => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  // Add custom media player controls
+  function createCustomPlayer(mediaType, mediaPath) {
+    playerContainer.innerHTML = ''; // Clear previous content
+
+    const mediaElement = document.createElement(mediaType);
+    mediaElement.src = mediaPath;
+    mediaElement.className = 'custom-media';
+    mediaElement.autoplay = true;
+
+    const controls = document.createElement('div');
+    controls.className = 'custom-controls';
+
+    const playPauseButton = document.createElement('button');
+    playPauseButton.textContent = 'Play';
+    playPauseButton.className = 'play-pause';
+    playPauseButton.addEventListener('click', () => {
+      if (mediaElement.paused) {
+        mediaElement.play();
+        playPauseButton.textContent = 'Pause';
+      } else {
+        mediaElement.pause();
+        playPauseButton.textContent = 'Play';
+      }
+    });
+
+    const seekBar = document.createElement('input');
+    seekBar.type = 'range';
+    seekBar.min = 0;
+    seekBar.max = 100;
+    seekBar.value = 0;
+    seekBar.className = 'seek-bar';
+    seekBar.addEventListener('input', () => {
+      mediaElement.currentTime = (seekBar.value / 100) * mediaElement.duration;
+    });
+
+    mediaElement.addEventListener('timeupdate', () => {
+      seekBar.value = (mediaElement.currentTime / mediaElement.duration) * 100;
+    });
+
+    const volumeControl = document.createElement('input');
+    volumeControl.type = 'range';
+    volumeControl.min = 0;
+    volumeControl.max = 1;
+    volumeControl.step = 0.1;
+    volumeControl.value = mediaElement.volume;
+    volumeControl.className = 'volume-control';
+    volumeControl.addEventListener('input', () => {
+      mediaElement.volume = volumeControl.value;
+    });
+
+    const fullscreenButton = document.createElement('button');
+    fullscreenButton.textContent = 'Fullscreen';
+    fullscreenButton.className = 'fullscreen';
+    fullscreenButton.addEventListener('click', () => {
+      if (playerOverlay.requestFullscreen) {
+        playerOverlay.requestFullscreen();
+      } else if (playerOverlay.webkitRequestFullscreen) {
+        playerOverlay.webkitRequestFullscreen();
+      } else if (playerOverlay.msRequestFullscreen) {
+        playerOverlay.msRequestFullscreen();
+      }
+    });
+
+    controls.appendChild(playPauseButton);
+    controls.appendChild(seekBar);
+    controls.appendChild(volumeControl);
+    controls.appendChild(fullscreenButton);
+
+    playerContainer.appendChild(mediaElement);
+    playerContainer.appendChild(controls);
+  }
+
+  // Enhanced custom media player
+  function createEnhancedMediaPlayer(mediaType, mediaPath, mediaTitle) {
+    playerContainer.innerHTML = ''; // Clear previous content
+    
+    // Create container for the player
+    const playerWrapper = document.createElement('div');
+    playerWrapper.className = 'enhanced-player-wrapper';
+    
+    // Create media element
+    const mediaElement = document.createElement(mediaType);
+    mediaElement.className = 'custom-media';
+    mediaElement.src = mediaPath;
+    mediaElement.autoplay = true;
+    // Disable native controls, we'll use our custom ones
+    mediaElement.controls = false;
+    // Prevent context menu
+    mediaElement.oncontextmenu = (e) => e.preventDefault();
+    
+    // Create loading indicator
+    const loadingOverlay = document.createElement('div');
+    loadingOverlay.className = 'loading-overlay';
+    loadingOverlay.innerHTML = '<div class="spinner"></div>';
+    
+    // Create play overlay (big play button in center)
+    const playOverlay = document.createElement('div');
+    playOverlay.className = 'play-overlay';
+    playOverlay.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+    
+    // Create custom controls container
+    const controls = document.createElement('div');
+    controls.className = 'enhanced-controls';
+    
+    // Create progress bar container
+    const progressContainer = document.createElement('div');
+    progressContainer.className = 'progress-container';
+    
+    // Create progress bar
+    const progressBar = document.createElement('div');
+    progressBar.className = 'progress-bar';
+    
+    // Create progress indicator
+    const progressIndicator = document.createElement('div');
+    progressIndicator.className = 'progress-indicator';
+    progressBar.appendChild(progressIndicator);
+    
+    // Create buffer indicator
+    const bufferIndicator = document.createElement('div');
+    bufferIndicator.className = 'buffer-indicator';
+    progressBar.appendChild(bufferIndicator);
+    
+    // Add progress bar to container
+    progressContainer.appendChild(progressBar);
+    
+    // Create time display
+    const timeDisplay = document.createElement('div');
+    timeDisplay.className = 'time-display';
+    timeDisplay.textContent = '0:00 / 0:00';
+    
+    // Create controls row
+    const controlsRow = document.createElement('div');
+    controlsRow.className = 'controls-row';
+    
+    // Create play/pause button
+    const playPauseButton = document.createElement('button');
+    playPauseButton.className = 'control-button play-pause';
+    playPauseButton.innerHTML = '<svg class="pause-icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>' + 
+                                '<svg class="play-icon hidden" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+    playPauseButton.setAttribute('aria-label', 'Pause');
+    
+    // Create volume container
+    const volumeContainer = document.createElement('div');
+    volumeContainer.className = 'volume-container';
+    
+    // Create volume button
+    const volumeButton = document.createElement('button');
+    volumeButton.className = 'control-button volume';
+    volumeButton.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+    volumeButton.setAttribute('aria-label', 'Volume');
+    
+    // Create volume slider
+    const volumeSlider = document.createElement('input');
+    volumeSlider.type = 'range';
+    volumeSlider.min = 0;
+    volumeSlider.max = 1;
+    volumeSlider.step = 0.01;
+    volumeSlider.value = 1;
+    volumeSlider.className = 'volume-slider';
+    
+    // Add elements to volume container
+    volumeContainer.appendChild(volumeButton);
+    volumeContainer.appendChild(volumeSlider);
+    
+    // Create speed control
+    const speedButton = document.createElement('button');
+    speedButton.className = 'control-button speed';
+    speedButton.textContent = '1x';
+    speedButton.setAttribute('aria-label', 'Playback Speed');
+    
+    // Create speed menu
+    const speedMenu = document.createElement('div');
+    speedMenu.className = 'speed-menu hidden';
+    
+    // Add speed options
+    const speeds = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+    speeds.forEach(speed => {
+      const option = document.createElement('div');
+      option.className = 'speed-option';
+      option.textContent = speed + 'x';
+      option.dataset.speed = speed;
+      
+      if (speed === 1) {
+        option.classList.add('active');
+      }
+      
+      option.addEventListener('click', () => {
+        mediaElement.playbackRate = speed;
+        speedButton.textContent = speed + 'x';
+        document.querySelectorAll('.speed-option').forEach(opt => opt.classList.remove('active'));
+        option.classList.add('active');
+        speedMenu.classList.add('hidden');
+      });
+      
+      speedMenu.appendChild(option);
+    });
+    
+    // Create fullscreen button
+    const fullscreenButton = document.createElement('button');
+    fullscreenButton.className = 'control-button fullscreen';
+    fullscreenButton.innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>';
+    fullscreenButton.setAttribute('aria-label', 'Fullscreen');
+    
+    // Assemble controls
+    controlsRow.appendChild(playPauseButton);
+    controlsRow.appendChild(timeDisplay);
+    controlsRow.appendChild(volumeContainer);
+    controlsRow.appendChild(speedButton);
+    controlsRow.appendChild(speedMenu);
+    controlsRow.appendChild(fullscreenButton);
+    
+    // Add elements to controls
+    controls.appendChild(progressContainer);
+    controls.appendChild(controlsRow);
+    
+    // Add everything to the player wrapper
+    playerWrapper.appendChild(mediaElement);
+    playerWrapper.appendChild(loadingOverlay);
+    playerWrapper.appendChild(playOverlay);
+    playerWrapper.appendChild(controls);
+    
+    // Add player wrapper to the container
+    playerContainer.appendChild(playerWrapper);
+    
+    // Setup event listeners
+    
+    // Media element events
+    mediaElement.addEventListener('loadstart', () => {
+      loadingOverlay.classList.remove('hidden');
+    });
+    
+    mediaElement.addEventListener('canplay', () => {
+      loadingOverlay.classList.add('hidden');
+    });
+    
+    mediaElement.addEventListener('waiting', () => {
+      loadingOverlay.classList.remove('hidden');
+    });
+    
+    mediaElement.addEventListener('playing', () => {
+      loadingOverlay.classList.add('hidden');
+      playOverlay.classList.add('hidden');
+      playPauseButton.querySelector('.play-icon').classList.add('hidden');
+      playPauseButton.querySelector('.pause-icon').classList.remove('hidden');
+      playPauseButton.setAttribute('aria-label', 'Pause');
+    });
+    
+    mediaElement.addEventListener('pause', () => {
+      playOverlay.classList.remove('hidden');
+      playPauseButton.querySelector('.play-icon').classList.remove('hidden');
+      playPauseButton.querySelector('.pause-icon').classList.add('hidden');
+      playPauseButton.setAttribute('aria-label', 'Play');
+    });
+    
+    mediaElement.addEventListener('timeupdate', () => {
+      // Update progress bar
+      const progress = (mediaElement.currentTime / mediaElement.duration) * 100;
+      progressIndicator.style.width = `${progress}%`;
+      
+      // Update time display
+      const currentTime = formatTime(mediaElement.currentTime);
+      const duration = formatTime(mediaElement.duration);
+      timeDisplay.textContent = `${currentTime} / ${duration}`;
+    });
+    
+    mediaElement.addEventListener('progress', () => {
+      // Update buffer bar
+      if (mediaElement.buffered.length > 0) {
+        const bufferedEnd = mediaElement.buffered.end(mediaElement.buffered.length - 1);
+        const duration = mediaElement.duration;
+        
+        if (duration > 0) {
+          const bufferedPercent = (bufferedEnd / duration) * 100;
+          bufferIndicator.style.width = `${bufferedPercent}%`;
+        }
+      }
+    });
+    
+    mediaElement.addEventListener('volumechange', () => {
+      volumeSlider.value = mediaElement.volume;
+      
+      // Update volume icon based on mute state and volume level
+      if (mediaElement.muted || mediaElement.volume === 0) {
+        volumeButton.innerHTML = '<svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+      } else if (mediaElement.volume < 0.5) {
+        volumeButton.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm10-.5v2.03c.84.53 1.41 1.46 1.41 2.52 0 1.06-.57 1.98-1.41 2.51v2.03c1.8-.74 3.07-2.5 3.07-4.54 0-2.04-1.27-3.8-3.07-4.55z"/></svg>';
+      } else {
+        volumeButton.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+      }
+    });
+    
+    mediaElement.addEventListener('ended', () => {
+      playOverlay.classList.remove('hidden');
+      playPauseButton.querySelector('.play-icon').classList.remove('hidden');
+      playPauseButton.querySelector('.pause-icon').classList.add('hidden');
+      playPauseButton.setAttribute('aria-label', 'Restart');
+    });
+    
+    // Control button events
+    playPauseButton.addEventListener('click', () => {
+      if (mediaElement.paused) {
+        mediaElement.play();
+      } else {
+        mediaElement.pause();
+      }
+    });
+    
+    // Play overlay click
+    playOverlay.addEventListener('click', () => {
+      mediaElement.play();
+    });
+    
+    // Click on video to toggle play/pause
+    mediaElement.addEventListener('click', () => {
+      if (mediaElement.paused) {
+        mediaElement.play();
+      } else {
+        mediaElement.pause();
+      }
+    });
+    
+    // Progress bar click
+    progressBar.addEventListener('click', (e) => {
+      const rect = progressBar.getBoundingClientRect();
+      const pos = (e.clientX - rect.left) / progressBar.offsetWidth;
+      mediaElement.currentTime = pos * mediaElement.duration;
+    });
+    
+    // Make progress bar draggable
+    let isDragging = false;
+    
+    progressBar.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      updateProgressOnDrag(e);
+      
+      // Pause while dragging for better UX
+      const wasPlaying = !mediaElement.paused;
+      if (wasPlaying) {
+        mediaElement.pause();
+      }
+      
+      document.addEventListener('mousemove', updateProgressOnDrag);
+      document.addEventListener('mouseup', () => {
+        isDragging = false;
+        document.removeEventListener('mousemove', updateProgressOnDrag);
+        
+        // Resume playback if it was playing before
+        if (wasPlaying) {
+          mediaElement.play();
+        }
+      }, { once: true });
+    });
+    
+    function updateProgressOnDrag(e) {
+      if (isDragging) {
+        const rect = progressBar.getBoundingClientRect();
+        const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / progressBar.offsetWidth));
+        mediaElement.currentTime = pos * mediaElement.duration;
+      }
+    }
+    
+    // Volume controls
+    volumeButton.addEventListener('click', () => {
+      mediaElement.muted = !mediaElement.muted;
+    });
+    
+    volumeSlider.addEventListener('input', () => {
+      mediaElement.volume = volumeSlider.value;
+      mediaElement.muted = false;
+    });
+    
+    // Speed button
+    speedButton.addEventListener('click', () => {
+      speedMenu.classList.toggle('hidden');
+    });
+    
+    // Hide speed menu when clicking elsewhere
+    document.addEventListener('click', (e) => {
+      if (!speedButton.contains(e.target) && !speedMenu.contains(e.target)) {
+        speedMenu.classList.add('hidden');
+      }
+    });
+    
+    // Fullscreen button
+    fullscreenButton.addEventListener('click', () => {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        playerWrapper.requestFullscreen();
+      }
+    });
+    
+    // Keyboard controls
+    document.addEventListener('keydown', handleKeyDown);
+    
+    function handleKeyDown(e) {
+      // Only handle keys if player is visible
+      if (playerOverlay.classList.contains('hidden')) {
+        return;
+      }
+      
+      switch (e.key) {
+        case ' ':
+          // Space bar - toggle play/pause
+          if (mediaElement.paused) {
+            mediaElement.play();
+          } else {
+            mediaElement.pause();
+          }
+          e.preventDefault();
+          break;
+        case 'ArrowRight':
+          // Right arrow - forward 10 seconds
+          mediaElement.currentTime = Math.min(mediaElement.duration, mediaElement.currentTime + 10);
+          e.preventDefault();
+          break;
+        case 'ArrowLeft':
+          // Left arrow - rewind 10 seconds
+          mediaElement.currentTime = Math.max(0, mediaElement.currentTime - 10);
+          e.preventDefault();
+          break;
+        case 'ArrowUp':
+          // Up arrow - increase volume
+          mediaElement.volume = Math.min(1, mediaElement.volume + 0.05);
+          mediaElement.muted = false;
+          e.preventDefault();
+          break;
+        case 'ArrowDown':
+          // Down arrow - decrease volume
+          mediaElement.volume = Math.max(0, mediaElement.volume - 0.05);
+          e.preventDefault();
+          break;
+        case 'm':
+          // M key - mute/unmute
+          mediaElement.muted = !mediaElement.muted;
+          e.preventDefault();
+          break;
+        case 'f':
+          // F key - fullscreen
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          } else {
+            playerWrapper.requestFullscreen();
+          }
+          e.preventDefault();
+          break;
+      }
+    }
+    
+    // Clean up event listeners when closing player
+    closePlayerBtn.addEventListener('click', () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    });
+    
+    // Helper function to format time (seconds to MM:SS)
+    function formatTime(seconds) {
+      if (isNaN(seconds)) return '0:00';
+      
+      const minutes = Math.floor(seconds / 60);
+      seconds = Math.floor(seconds % 60);
+      
+      return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    }
   }
 });
